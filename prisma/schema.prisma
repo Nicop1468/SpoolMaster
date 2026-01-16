@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  password      String?
+  createdAt     DateTime  @default(now())
+  spools        Spool[]
+}
+
+model Spool {
+  id            Int       @id @default(autoincrement())
+  brand         String
+  type          String
+  color         String
+  colorHex      String
+  initialWeight Float
+  currentWeight Float
+  price         Float     @default(0)
+  link          String?
+  storage       String?   @default("Air Libre")
+  lastDried     DateTime?
+  createdAt     DateTime  @default(now())
+  nozzleTemp    Int       @default(200)
+  bedTemp       Int       @default(60)
+  rating        Int       @default(0)
+  note          String?
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  history       Consumption[]
+}
+
+model SpoolReference {
+  id          Int     @id @default(autoincrement())
+  brand       String
+  type        String
+  colorName   String
+  colorHex    String
+  link        String?
+  nozzleTemp  Int     @default(200)
+  bedTemp     Int     @default(60)
+}
+
+model Consumption {
+  id        Int      @id @default(autoincrement())
+  spoolId   Int
+  spool     Spool    @relation(fields: [spoolId], references: [id], onDelete: Cascade)
+  weight    Float
+  cost      Float    @default(0)
+  createdAt DateTime @default(now())
+}
