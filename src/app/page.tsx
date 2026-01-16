@@ -4,41 +4,42 @@ import SpoolCard from "../components/SpoolCard";
 
 export default function StockPage() {
   const [spools, setSpools] = useState([]);
-  const [error, setError] = useState(null);
+  const [status, setStatus] = useState("chargement");
 
   useEffect(() => {
-    console.log("Tentative de recuperation des donnees...");
     fetch("/api/spools")
       .then(res => {
-        if (!res.ok) throw new Error("Erreur serveur: " + res.status);
+        if (res.status === 401) { setStatus("auth_required"); return null; }
+        if (!res.ok) throw new Error("Erreur");
         return res.json();
       })
-      .then(data => setSpools(Array.isArray(data) ? data : []))
-      .catch(err => {
-        console.error("Erreur API:", err);
-        setError(err.message);
-      });
+      .then(data => {
+        if (data && Array.isArray(data)) {
+          setSpools(data);
+          setStatus("ok");
+        } else if (data) {
+          setStatus("empty");
+        }
+      })
+      .catch(() => setStatus("error"));
   }, []);
+
+  if (status === "auth_required") return <div className="p-20 text-center font-black uppercase">Session expiree. Veuillez vous reconnecter.</div>;
+  if (status === "chargement") return <div className="p-20 text-center font-black animate-pulse uppercase">Chargement du stock...</div>;
 
   return (
     <main className="p-8 max-w-7xl mx-auto">
-      <div className="mb-10 text-center">
-         <h1 className="text-5xl font-black text-slate-900 italic tracking-tighter uppercase">Mon Stock</h1>
-         <div className="bg-blue-500 text-white inline-block px-4 py-1 rounded-full text-[10px] font-bold mt-2">
-            DEBUG: {spools.length} bobines trouvees
-         </div>
-         {error && <p className="text-red-500 font-bold mt-2">Erreur: {error}</p>}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {spools.length > 0 ? (
-          spools.map((s) => <SpoolCard key={s.id} spool={s} />)
-        ) : (
-          <div className="col-span-full text-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-slate-200">
-             <p className="text-slate-400 font-black uppercase">Aucune donnee a afficher</p>
-          </div>
-        )}
-      </div>
+      <h1 className="text-5xl font-black text-slate-900 italic tracking-tighter uppercase mb-10">Mon Stock</h1>
+      
+      {spools.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {spools.map((s) => <SpoolCard key={s.id} spool={s} />)}
+        </div>
+      ) : (
+        <div className="p-20 border-2 border-dashed border-slate-200 rounded-[3rem] text-center">
+          <p className="font-black text-slate-400 uppercase italic">Aucune bobine trouvee</p>
+        </div>
+      )}
     </main>
   );
 }
