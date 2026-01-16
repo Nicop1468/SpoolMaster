@@ -1,13 +1,12 @@
 ﻿import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma"; // Assure-toi que ce chemin est correct selon ton projet
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const spools = await prisma.spool.findMany({
-      orderBy: { updatedAt: 'desc' }
-    });
-    return NextResponse.json(spools);
-  } catch (error) {
-    return NextResponse.json({ error: "Erreur lors du chargement" }, { status: 500 });
+    const spools = await prisma.spool.findMany();
+    return NextResponse.json(spools || []);
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json([], { status: 200 }); // On renvoie un tableau vide meme en cas d'erreur
   }
 }
